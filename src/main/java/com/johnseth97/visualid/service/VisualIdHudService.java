@@ -1,6 +1,6 @@
-package com.johnseth97.info.service;
+package com.johnseth97.visualid.service;
 
-import com.johnseth97.info.config.VisualIdConfig;
+import com.johnseth97.visualid.config.VisualIdConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

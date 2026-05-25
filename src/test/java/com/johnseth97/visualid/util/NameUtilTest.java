@@ -1,4 +1,4 @@
-package com.johnseth97.info.util;
+package com.johnseth97.visualid.util;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

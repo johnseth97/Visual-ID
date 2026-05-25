@@ -1,8 +1,8 @@
-package com.johnseth97.info.command;
+package com.johnseth97.visualid.command;
 
-import com.johnseth97.info.VisualIdPlugin;
-import com.johnseth97.info.service.VisualIdHudService;
-import com.johnseth97.info.service.TargetInfoService;
+import com.johnseth97.visualid.VisualIdPlugin;
+import com.johnseth97.visualid.service.TargetInfoService;
+import com.johnseth97.visualid.service.VisualIdHudService;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

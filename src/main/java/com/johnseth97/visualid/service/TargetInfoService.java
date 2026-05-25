@@ -1,7 +1,7 @@
-package com.johnseth97.info.service;
+package com.johnseth97.visualid.service;
 
-import com.johnseth97.info.config.VisualIdConfig;
-import com.johnseth97.info.util.NameUtil;
+import com.johnseth97.visualid.config.VisualIdConfig;
+import com.johnseth97.visualid.util.NameUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;

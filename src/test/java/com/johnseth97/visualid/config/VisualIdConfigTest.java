@@ -1,4 +1,4 @@
-package com.johnseth97.info.config;
+package com.johnseth97.visualid.config;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;

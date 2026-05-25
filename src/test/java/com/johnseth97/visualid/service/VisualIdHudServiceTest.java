@@ -1,6 +1,6 @@
-package com.johnseth97.info.service;
+package com.johnseth97.visualid.service;
 
-import com.johnseth97.info.config.VisualIdConfig;
+import com.johnseth97.visualid.config.VisualIdConfig;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;

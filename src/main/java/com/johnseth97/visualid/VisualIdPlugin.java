@@ -1,9 +1,9 @@
-package com.johnseth97.info;
+package com.johnseth97.visualid;
 
-import com.johnseth97.info.command.VisualIdCommand;
-import com.johnseth97.info.config.VisualIdConfig;
-import com.johnseth97.info.service.VisualIdHudService;
-import com.johnseth97.info.service.TargetInfoService;
+import com.johnseth97.visualid.command.VisualIdCommand;
+import com.johnseth97.visualid.config.VisualIdConfig;
+import com.johnseth97.visualid.service.TargetInfoService;
+import com.johnseth97.visualid.service.VisualIdHudService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.java.JavaPlugin;

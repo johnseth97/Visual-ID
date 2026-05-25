@@ -1,9 +1,9 @@
-package com.johnseth97.info.service;
+package com.johnseth97.visualid.service;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.MockPlugin;
 import be.seeseemelk.mockbukkit.ServerMock;
-import com.johnseth97.info.config.VisualIdConfig;
+import com.johnseth97.visualid.config.VisualIdConfig;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
