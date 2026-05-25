@@ -1,20 +1,26 @@
-name: Info
-version: 1.0.0
+name: VisualID
+version: 1.0.1
 main: com.johnseth97.info.InfoPlugin
 api-version: '1.21'
 author: johnseth97
-description: Lightweight server-side block/entity info HUD for Paper.
+description: Lightweight server-side Visual Identification HUD for Paper.
 
-# Commands are registered dynamically from config.yml (command: <name>).
-# No static command block here — that lets admins remap the keyword freely.
+# "visual-id" is the built-in keyword registered here for proper Brigadier integration.
+# To use a different keyword, set command: <name> in config.yml — that alias is
+# registered dynamically on top of this one.
+commands:
+  visual-id:
+    description: Visual Identification HUD.
+    usage: /visual-id [toggle|status|reload|config]
+    permission: visualid.use
 
 permissions:
-  info.use:
-    description: Allows receiving the Info HUD.
+  visualid.use:
+    description: Allows receiving the Visual ID HUD.
     default: true
-  info.toggle:
-    description: Allows toggling the Info HUD on/off.
+  visualid.toggle:
+    description: Allows toggling the Visual ID HUD on/off.
     default: true
-  info.reload:
+  visualid.reload:
     description: Allows reloading config and toggling display sections.
     default: op

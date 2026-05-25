@@ -5,13 +5,15 @@ import com.johnseth97.info.service.InfoHudService;
 import com.johnseth97.info.service.TargetInfoService;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Map;
 
-public class InfoCommand extends Command {
+public class InfoCommand extends Command implements CommandExecutor, TabCompleter {
 
     // Maps short section names (used in the command) to config.yml paths.
     private static final Map<String, String> SECTIONS = Map.of(
@@ -29,9 +31,9 @@ public class InfoCommand extends Command {
 
     public InfoCommand(String name, InfoPlugin plugin, InfoHudService hudService, TargetInfoService targetInfoService) {
         super(name);
-        setDescription("Block/entity info HUD.");
+        setDescription("Visual Identification HUD.");
         setUsage("/" + name + " [toggle|status|reload|config]");
-        setPermission("info.use");
+        setPermission("visualid.use");
         this.plugin = plugin;
         this.hudService = hudService;
         this.targetInfoService = targetInfoService;
@@ -61,13 +63,13 @@ public class InfoCommand extends Command {
             sender.sendMessage("Only players can use this command.");
             return;
         }
-        if (!player.hasPermission("info.use")) {
+        if (!player.hasPermission("visualid.use")) {
             player.sendMessage("You don't have permission to do that.");
             return;
         }
         Component result = targetInfoService.getTargetComponent(player, plugin.getInfoConfig());
         if (result == null) {
-            player.sendMessage("[Info] Not looking at anything.");
+            player.sendMessage("[VisualID] Not looking at anything.");
             return;
         }
         // Send immediately, then refresh once more after one interval to extend visibility.
@@ -81,12 +83,12 @@ public class InfoCommand extends Command {
             sender.sendMessage("Only players can toggle the HUD.");
             return;
         }
-        if (!player.hasPermission("info.toggle")) {
+        if (!player.hasPermission("visualid.toggle")) {
             player.sendMessage("You don't have permission to do that.");
             return;
         }
         boolean nowEnabled = hudService.toggle(player);
-        player.sendMessage("[Info] HUD " + (nowEnabled ? "enabled" : "disabled") + ".");
+        player.sendMessage("[VisualID] HUD " + (nowEnabled ? "enabled" : "disabled") + ".");
     }
 
     private void handleStatus(CommandSender sender, String label) {
@@ -96,7 +98,7 @@ public class InfoCommand extends Command {
         }
         var cfg = plugin.getInfoConfig();
         boolean on = hudService.isEnabled(player);
-        sender.sendMessage("[Info] HUD: " + (on ? "enabled" : "disabled")
+        sender.sendMessage("[VisualID] HUD: " + (on ? "enabled" : "disabled")
                 + " | distance: " + cfg.maxDistance
                 + " | interval: " + cfg.updateIntervalTicks + " ticks");
         sender.sendMessage("Sections — name:" + flag(cfg.showMaterialName)
@@ -108,16 +110,16 @@ public class InfoCommand extends Command {
     }
 
     private void handleReload(CommandSender sender) {
-        if (!sender.hasPermission("info.reload")) {
+        if (!sender.hasPermission("visualid.reload")) {
             sender.sendMessage("You don't have permission to do that.");
             return;
         }
         plugin.reloadInfoConfig();
-        sender.sendMessage("[Info] Config reloaded.");
+        sender.sendMessage("[VisualID] Config reloaded.");
     }
 
     private void handleConfig(CommandSender sender, String label, String[] args) {
-        if (!sender.hasPermission("info.reload")) {
+        if (!sender.hasPermission("visualid.reload")) {
             sender.sendMessage("You don't have permission to do that.");
             return;
         }
@@ -131,39 +133,51 @@ public class InfoCommand extends Command {
 
         String configPath = SECTIONS.get(section);
         if (configPath == null) {
-            sender.sendMessage("[Info] Unknown section '" + section + "'. Options: " + String.join(", ", SECTIONS.keySet()));
+            sender.sendMessage("[VisualID] Unknown section '" + section + "'. Options: " + String.join(", ", SECTIONS.keySet()));
             return;
         }
 
         boolean enable = switch (action) {
-            case "enable", "on", "true"   -> true;
+            case "enable", "on", "true"    -> true;
             case "disable", "off", "false" -> false;
             default -> {
-                sender.sendMessage("[Info] Use 'enable' or 'disable'.");
-                yield plugin.getConfig().getBoolean(configPath); // no change
+                sender.sendMessage("[VisualID] Use 'enable' or 'disable'.");
+                yield plugin.getConfig().getBoolean(configPath);
             }
         };
 
         plugin.getConfig().set(configPath, enable);
         plugin.saveConfig();
         plugin.reloadInfoConfig();
-        sender.sendMessage("[Info] " + section + " " + (enable ? "enabled" : "disabled") + " and saved.");
+        sender.sendMessage("[VisualID] " + section + " " + (enable ? "enabled" : "disabled") + " and saved.");
     }
 
     // ── Help ───────────────────────────────────────────────────────────────────
 
     private void sendHelp(CommandSender sender, String label) {
-        sender.sendMessage("/" + label + "                         - Show current target once");
-        sender.sendMessage("/" + label + " toggle                  - Enable/disable your HUD");
-        sender.sendMessage("/" + label + " status                  - Show HUD state and section flags");
-        sender.sendMessage("/" + label + " config <section> <enable|disable>  - Toggle a display section");
-        sender.sendMessage("/" + label + " reload                  - Reload config (admin)");
+        sender.sendMessage("/" + label + "                              - Show current target once");
+        sender.sendMessage("/" + label + " toggle                       - Enable/disable your HUD");
+        sender.sendMessage("/" + label + " status                       - Show HUD state and section flags");
+        sender.sendMessage("/" + label + " config <section> enable|disable  - Toggle a display section");
+        sender.sendMessage("/" + label + " reload                       - Reload config (admin)");
         sender.sendMessage("Sections: " + String.join(", ", SECTIONS.keySet()));
     }
 
     private void sendConfigHelp(CommandSender sender, String label) {
         sender.sendMessage("Usage: /" + label + " config <section> enable|disable");
         sender.sendMessage("Sections: " + String.join(", ", SECTIONS.keySet()));
+    }
+
+    // ── CommandExecutor / TabCompleter bridge (for PluginCommand wiring) ───────
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        return execute(sender, label, args);
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        return tabComplete(sender, label, args);
     }
 
     // ── Tab completion ─────────────────────────────────────────────────────────

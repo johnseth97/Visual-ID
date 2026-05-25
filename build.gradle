@@ -27,7 +27,7 @@ dependencies {
 }
 
 jar {
-    archiveFileName = "Info-${version}.jar"
+    archiveFileName = "VisualID-${version}.jar"
 }
 
 test {

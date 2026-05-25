@@ -1,4 +1,4 @@
-# Info
+# Visual Identification (VisualID)
 
 Lightweight server-side WAILA/Jade-style plugin for Paper. Shows players what block or entity they are looking at via the actionbar. No client mod required.
 
@@ -13,50 +13,60 @@ Lightweight server-side WAILA/Jade-style plugin for Paper. Shows players what bl
 ./gradlew clean build
 ```
 
-Output: `build/libs/Info-1.0.0.jar`
-
-## Release
-
-Publishing runs via GitHub Actions on tag push (`vX.Y.Z`) or the manual **Publish** workflow. The workflow creates a GitHub Release with the built jar attached.
-
-To enable Modrinth publishing, set repository variable `MODRINTH_PROJECT_ID` and secret `MODRINTH_TOKEN`. When present, the same jar is uploaded for Paper 1.21.4.
+Output: `build/libs/VisualID-1.0.1.jar`
 
 ## Install
 
-```bash
-sudo cp build/libs/Info-1.0.0.jar /srv/minecraft/paper/plugins/
-sudo chown minecraft:minecraft /srv/minecraft/paper/plugins/Info-1.0.0.jar
-```
+Copy the jar to your server's `plugins/` folder and restart. On first start, a `plugins/VisualID/config.yml` is created with defaults.
 
-Restart the server.
+```bash
+sudo cp build/libs/VisualID-*.jar /srv/minecraft/paper/plugins/
+```
 
 ## Commands
 
 | Command | Description | Permission |
 |---|---|---|
-| `/info` | Show help | `info.use` |
-| `/info toggle` | Enable/disable your HUD | `info.toggle` |
-| `/info status` | Show current HUD state | `info.use` |
-| `/info reload` | Reload config (admin) | `info.reload` |
+| `/visual-id` | One-shot: show what you're looking at, held for 2× the normal interval | `visualid.use` |
+| `/visual-id toggle` | Enable/disable your personal HUD | `visualid.toggle` |
+| `/visual-id status` | Show HUD state and which sections are enabled | `visualid.use` |
+| `/visual-id config <section> enable\|disable` | Toggle a display section and save | `visualid.reload` |
+| `/visual-id reload` | Reload config from disk | `visualid.reload` |
+
+### Display sections
+
+| Section | What it shows |
+|---|---|
+| `name` | Pretty block/entity name |
+| `key` | Namespaced ID (e.g. `minecraft:oak_log`) |
+| `coordinates` | Block XYZ |
+| `biome` | Biome name |
+| `light` | Light level at the block |
+| `health` | Entity current/max health with colour coding |
+
+Example: `/visual-id config biome enable`
 
 ## Permissions
 
 | Permission | Default | Description |
 |---|---|---|
-| `info.use` | true | Receive the HUD |
-| `info.toggle` | true | Toggle own HUD on/off |
-| `info.reload` | op | Reload config |
+| `visualid.use` | true | Receive the HUD |
+| `visualid.toggle` | true | Toggle own HUD on/off |
+| `visualid.reload` | op | Reload config / toggle sections |
 
 ## Config
 
-`plugins/Info/config.yml` (created on first start):
+`plugins/VisualID/config.yml`:
 
 ```yaml
+# Command keyword. Change this if another plugin already uses /visual-id.
+# Requires a server restart to take effect.
+command: visual-id
+
 enabled-by-default: true
 update-interval-ticks: 5
 max-distance: 8.0
 prefer-entities: true
-display-mode: actionbar
 
 show:
   material-name: true
@@ -67,14 +77,18 @@ show:
   entity-health: true
 ```
 
-## Example Output
+## Example output
 
 Looking at a block:
 ```
-Oak Log · minecraft:oak_log · 123, 68, -44
+Packed Ice  ·  minecraft:packed_ice  ·  12, 64, -8  ·  Minecraft
 ```
 
 Looking at an entity:
 ```
-Zombie · minecraft:zombie · Health: 18/20
+Zombie  ·  minecraft:zombie  ·  ❤ 18/20  ·  Minecraft
 ```
+
+## Development deploy (VS Code)
+
+Copy `.env.example` to `.env` and fill in your server details, then use the **Build & Deploy VisualID to Server** run configuration or the **Build & Deploy** task.

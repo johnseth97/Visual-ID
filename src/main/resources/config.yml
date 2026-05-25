@@ -1,6 +1,6 @@
-# Command keyword. Change this if another plugin already uses /info.
+# Command keyword. Change this if another plugin already uses /visual-id.
 # Requires a server restart to take effect.
-command: info
+command: visual-id
 
 enabled-by-default: true
 update-interval-ticks: 5
