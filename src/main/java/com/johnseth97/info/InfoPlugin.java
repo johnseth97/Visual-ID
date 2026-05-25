@@ -52,10 +52,14 @@ public class InfoPlugin extends JavaPlugin {
         return infoConfig;
     }
 
-    public void reloadInfoConfig() {
-        reloadConfig();
+    public void applyInfoConfig() {
         infoConfig = new InfoConfig(getConfig());
         hudService.reload(infoConfig);
+    }
+
+    public void reloadInfoConfig() {
+        reloadConfig();
+        applyInfoConfig();
     }
 
     private void registerDynamic(String name, InfoCommand cmd) {

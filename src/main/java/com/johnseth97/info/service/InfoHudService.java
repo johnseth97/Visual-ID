@@ -16,6 +16,7 @@ public class InfoHudService {
     private final Plugin plugin;
     private final TargetInfoService targetInfoService;
     private final Set<UUID> disabledPlayers = new HashSet<>();
+    private final Set<UUID> pendingClear = new HashSet<>();
 
     private BukkitTask task;
     private InfoConfig config;
@@ -45,23 +46,30 @@ public class InfoHudService {
 
     public boolean toggle(Player player) {
         UUID id = player.getUniqueId();
+        boolean nowEnabled;
         if (config.enabledByDefault) {
             if (disabledPlayers.contains(id)) {
                 disabledPlayers.remove(id);
-                return true;
+                nowEnabled = true;
             } else {
                 disabledPlayers.add(id);
-                return false;
+                nowEnabled = false;
             }
         } else {
             if (disabledPlayers.contains(id)) {
                 disabledPlayers.remove(id);
-                return false;
+                nowEnabled = false;
             } else {
                 disabledPlayers.add(id);
-                return true;
+                nowEnabled = true;
             }
         }
+        if (nowEnabled) {
+            pendingClear.remove(id);
+        } else {
+            pendingClear.add(id);
+        }
+        return nowEnabled;
     }
 
     public boolean isEnabled(Player player) {
@@ -72,7 +80,12 @@ public class InfoHudService {
     private void tick() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!player.hasPermission("info.use")) continue;
-            if (!isEnabled(player)) continue;
+            if (!isEnabled(player)) {
+                if (pendingClear.remove(player.getUniqueId())) {
+                    player.sendActionBar(Component.empty());
+                }
+                continue;
+            }
 
             Component component = targetInfoService.getTargetComponent(player, config);
             if (component != null) {

@@ -148,7 +148,7 @@ public class InfoCommand extends Command implements CommandExecutor, TabComplete
 
         plugin.getConfig().set(configPath, enable);
         plugin.saveConfig();
-        plugin.reloadInfoConfig();
+        plugin.applyInfoConfig();
         sender.sendMessage("[VisualID] " + section + " " + (enable ? "enabled" : "disabled") + " and saved.");
     }
 
