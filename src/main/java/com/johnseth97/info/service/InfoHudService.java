@@ -14,17 +14,16 @@ import java.util.UUID;
 public class InfoHudService {
 
     private final Plugin plugin;
-    private final TargetInfoService targetInfoService = new TargetInfoService();
-
-    /** UUIDs of players who have the HUD disabled (flipped when enabledByDefault=true). */
+    private final TargetInfoService targetInfoService;
     private final Set<UUID> disabledPlayers = new HashSet<>();
 
     private BukkitTask task;
     private InfoConfig config;
 
-    public InfoHudService(Plugin plugin, InfoConfig config) {
+    public InfoHudService(Plugin plugin, InfoConfig config, TargetInfoService targetInfoService) {
         this.plugin = plugin;
         this.config = config;
+        this.targetInfoService = targetInfoService;
     }
 
     public void start() {
@@ -49,18 +48,18 @@ public class InfoHudService {
         if (config.enabledByDefault) {
             if (disabledPlayers.contains(id)) {
                 disabledPlayers.remove(id);
-                return true;  // now enabled
+                return true;
             } else {
                 disabledPlayers.add(id);
-                return false; // now disabled
+                return false;
             }
         } else {
             if (disabledPlayers.contains(id)) {
                 disabledPlayers.remove(id);
-                return false; // now disabled (remove from "enabled" set)
+                return false;
             } else {
                 disabledPlayers.add(id);
-                return true;  // now enabled
+                return true;
             }
         }
     }
@@ -75,9 +74,9 @@ public class InfoHudService {
             if (!player.hasPermission("info.use")) continue;
             if (!isEnabled(player)) continue;
 
-            String text = targetInfoService.getTargetText(player, config);
-            if (text != null && !text.isBlank()) {
-                player.sendActionBar(Component.text(text));
+            Component component = targetInfoService.getTargetComponent(player, config);
+            if (component != null) {
+                player.sendActionBar(component);
             }
         }
     }

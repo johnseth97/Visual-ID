@@ -5,11 +5,8 @@ api-version: '1.21'
 author: johnseth97
 description: Lightweight server-side block/entity info HUD for Paper.
 
-commands:
-  info:
-    description: Toggle or manage the Info HUD.
-    usage: /info [toggle|reload|status|mode]
-    permission: info.use
+# Commands are registered dynamically from config.yml (command: <name>).
+# No static command block here — that lets admins remap the keyword freely.
 
 permissions:
   info.use:
@@ -19,5 +16,5 @@ permissions:
     description: Allows toggling the Info HUD on/off.
     default: true
   info.reload:
-    description: Allows reloading the Info config.
+    description: Allows reloading config and toggling display sections.
     default: op

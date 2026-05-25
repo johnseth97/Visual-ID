@@ -2,26 +2,26 @@ package com.johnseth97.info.service;
 
 import com.johnseth97.info.config.InfoConfig;
 import com.johnseth97.info.util.NameUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Material;
-import org.bukkit.block.Biome;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.RayTraceResult;
 
-import java.util.Set;
-
 public class TargetInfoService {
 
-    /**
-     * Returns a formatted actionbar string for the block/entity the player is looking at,
-     * or null if nothing relevant is in range.
-     */
-    public String getTargetText(Player player, InfoConfig cfg) {
+    private static final Component SEP = Component.text("  ·  ", NamedTextColor.DARK_GRAY);
+
+    public Component getTargetComponent(Player player, InfoConfig cfg) {
         RayTraceResult entityResult = null;
-        RayTraceResult blockResult  = null;
+        RayTraceResult blockResult;
 
         if (cfg.preferEntities) {
             entityResult = player.getWorld().rayTraceEntities(
@@ -34,15 +34,12 @@ public class TargetInfoService {
 
         blockResult = player.rayTraceBlocks(cfg.maxDistance, FluidCollisionMode.NEVER);
 
-        // Prefer entity when it is closer (or when cfg says so), fall back to block
         if (cfg.preferEntities && entityResult != null && entityResult.getHitEntity() != null) {
             double eDist = entityResult.getHitPosition().distanceSquared(player.getEyeLocation().toVector());
             double bDist = blockResult != null && blockResult.getHitBlock() != null
                     ? blockResult.getHitPosition().distanceSquared(player.getEyeLocation().toVector())
                     : Double.MAX_VALUE;
-            if (eDist <= bDist) {
-                return formatEntity(entityResult.getHitEntity(), cfg);
-            }
+            if (eDist <= bDist) return formatEntity(entityResult.getHitEntity(), cfg);
         }
 
         if (blockResult != null && blockResult.getHitBlock() != null) {
@@ -55,65 +52,64 @@ public class TargetInfoService {
         return null;
     }
 
-    private String formatBlock(Block block, InfoConfig cfg) {
-        StringBuilder sb = new StringBuilder();
+    // ── Block ──────────────────────────────────────────────────────────────────
 
-        if (cfg.showMaterialName) {
-            sb.append(NameUtil.pretty(block.getType().name()));
-        }
+    private Component formatBlock(Block block, InfoConfig cfg) {
+        Component out = Component.text(NameUtil.pretty(block.getType().name()), NamedTextColor.WHITE);
 
         if (cfg.showNamespacedKey) {
-            appendSeparator(sb);
-            sb.append(block.getType().getKey().toString());
+            out = out.append(SEP)
+                     .append(Component.text(block.getType().getKey().toString(), NamedTextColor.GRAY));
         }
-
         if (cfg.showCoordinates) {
-            appendSeparator(sb);
-            sb.append(block.getX()).append(", ").append(block.getY()).append(", ").append(block.getZ());
+            out = out.append(SEP)
+                     .append(Component.text(block.getX() + ", " + block.getY() + ", " + block.getZ(), NamedTextColor.GRAY));
         }
-
         if (cfg.showBiome) {
-            appendSeparator(sb);
-            Biome biome = block.getBiome();
-            sb.append(NameUtil.pretty(biome.getKey().getKey().toUpperCase()));
+            String biome = NameUtil.pretty(block.getBiome().getKey().getKey().toUpperCase());
+            out = out.append(SEP).append(Component.text(biome, NamedTextColor.DARK_AQUA));
         }
-
         if (cfg.showLightLevel) {
-            appendSeparator(sb);
-            sb.append("Light: ").append(block.getLightLevel());
+            out = out.append(SEP).append(Component.text("Light " + block.getLightLevel(), NamedTextColor.YELLOW));
         }
+        out = out.append(SEP).append(modComponent(block.getType().getKey().namespace()));
 
-        return sb.toString();
+        return out;
     }
 
-    private String formatEntity(Entity entity, InfoConfig cfg) {
-        StringBuilder sb = new StringBuilder();
+    // ── Entity ─────────────────────────────────────────────────────────────────
 
+    private Component formatEntity(Entity entity, InfoConfig cfg) {
         String name = entity.customName() != null
-                ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(entity.customName())
+                ? PlainTextComponentSerializer.plainText().serialize(entity.customName())
                 : NameUtil.pretty(entity.getType().name());
 
-        if (cfg.showMaterialName) {
-            sb.append(name);
-        }
+        Component out = Component.text(name, NamedTextColor.WHITE);
 
         if (cfg.showNamespacedKey) {
-            appendSeparator(sb);
-            sb.append(entity.getType().getKey().toString());
+            out = out.append(SEP)
+                     .append(Component.text(entity.getType().getKey().toString(), NamedTextColor.GRAY));
         }
-
         if (cfg.showEntityHealth && entity instanceof LivingEntity living) {
-            appendSeparator(sb);
-            sb.append("Health: ")
-              .append((int) Math.ceil(living.getHealth()))
-              .append("/")
-              .append((int) living.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
+            double hp    = living.getHealth();
+            double maxHp = living.getAttribute(Attribute.MAX_HEALTH).getValue();
+            double ratio = hp / maxHp;
+            NamedTextColor healthColor = ratio > 0.5 ? NamedTextColor.GREEN
+                                       : ratio > 0.25 ? NamedTextColor.YELLOW
+                                       : NamedTextColor.RED;
+            out = out.append(SEP)
+                     .append(Component.text("❤ " + (int) Math.ceil(hp) + "/" + (int) maxHp, healthColor));
         }
+        out = out.append(SEP).append(modComponent(entity.getType().getKey().namespace()));
 
-        return sb.toString();
+        return out;
     }
 
-    private void appendSeparator(StringBuilder sb) {
-        if (!sb.isEmpty()) sb.append(" · ");
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    private Component modComponent(String namespace) {
+        return Component.text(NameUtil.pretty(namespace))
+                .color(NamedTextColor.BLUE)
+                .decoration(TextDecoration.ITALIC, true);
     }
 }
