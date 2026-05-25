@@ -27,3 +27,5 @@ bin/
 
 # Logs
 *.log
+AGENT_INSTURCTIONS/
+.claude/
