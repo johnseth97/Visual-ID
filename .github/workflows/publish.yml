@@ -16,24 +16,117 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
           cache: gradle
+
       - uses: gradle/actions/setup-gradle@v3
-      - name: Build
-        run: ./gradlew clean build
+
       - name: Resolve version
         run: |
           VERSION="${{ github.ref_name }}"
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
           fi
+
           VERSION="${VERSION#v}"
+
           echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v$VERSION" >> "$GITHUB_ENV"
+
+      - name: Generate raw changelog from commits
+        id: raw_changelog
+        run: |
+          set -euo pipefail
+
+          CURRENT_TAG="${RELEASE_TAG}"
+
+          if git rev-parse "$CURRENT_TAG" >/dev/null 2>&1; then
+            PREV_TAG="$(git describe --tags --abbrev=0 "$CURRENT_TAG^" 2>/dev/null || true)"
+          else
+            PREV_TAG="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+          fi
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="$PREV_TAG..HEAD"
+            RANGE_LABEL="$PREV_TAG → $CURRENT_TAG"
+          else
+            RANGE="HEAD"
+            RANGE_LABEL="Initial release"
+          fi
+
+          {
+            echo "## Visual-ID ${RELEASE_VERSION}"
+            echo
+            echo "**Changes:**"
+            echo
+            git log "$RANGE" --pretty=format:'- %s (%h)' --no-merges
+            echo
+          } > CHANGELOG.generated.md
+
+          echo "Generated changelog:"
+          cat CHANGELOG.generated.md
+
+      - name: Try Copilot changelog polish
+        if: ${{ secrets.COPILOT_ACCESS_TOKEN != '' }}
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.COPILOT_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          npm install -g @github/copilot
+
+          copilot -p "
+          Rewrite this release changelog for a Minecraft Paper plugin release.
+
+          Requirements:
+          - Keep it concise.
+          - Use Markdown.
+          - Keep version heading: Visual-ID ${RELEASE_VERSION}.
+          - Summarize user-visible changes first.
+          - Include fixes and internal changes only if relevant.
+          - Do not invent features.
+          - Do not mention Copilot or AI.
+          - Write the result to CHANGELOG.polished.md.
+
+          Existing changelog:
+          $(cat CHANGELOG.generated.md)
+          " \
+          --allow-tool=write \
+          --no-ask-user
+
+      - name: Select final changelog
+        run: |
+          set -euo pipefail
+
+          if [ -s CHANGELOG.polished.md ]; then
+            cp CHANGELOG.polished.md CHANGELOG.md
+          else
+            cp CHANGELOG.generated.md CHANGELOG.md
+          fi
+
+          echo "Final changelog:"
+          cat CHANGELOG.md
+
+          {
+            echo 'CHANGELOG_BODY<<EOF'
+            cat CHANGELOG.md
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
+      - name: Build
+        run: ./gradlew clean build -Pversion="${RELEASE_VERSION}"
+
       - name: Publish GitHub release
         uses: Kir-Antipov/mc-publish@v3.3
         with:
@@ -42,10 +135,10 @@ jobs:
           name: Visual-ID ${{ env.RELEASE_VERSION }}
           version: ${{ env.RELEASE_VERSION }}
           version-type: release
+          changelog: ${{ env.CHANGELOG_BODY }}
+
       - name: Publish to Modrinth
-        if: ${{ vars.MODRINTH_PROJECT_ID != '' && env.MODRINTH_TOKEN != '' }}
-        env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        if: ${{ vars.MODRINTH_PROJECT_ID != '' && secrets.MODRINTH_TOKEN != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
@@ -54,6 +147,7 @@ jobs:
           name: Visual-ID ${{ env.RELEASE_VERSION }}
           version: ${{ env.RELEASE_VERSION }}
           version-type: release
+          changelog: ${{ env.CHANGELOG_BODY }}
           loaders: |
             paper
           game-versions: |
