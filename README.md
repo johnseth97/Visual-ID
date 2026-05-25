@@ -27,7 +27,7 @@ sudo cp build/libs/VisualID-*.jar /srv/minecraft/paper/plugins/
 
 | Command | Description | Permission |
 |---|---|---|
-| `/visual-id` | One-shot: show what you're looking at, held for 2× the normal interval | `visualid.use` |
+| `/visual-id` | One-shot: show what you're looking at, held for 3× the normal interval | `visualid.use` |
 | `/visual-id toggle` | Enable/disable your personal HUD | `visualid.toggle` |
 | `/visual-id status` | Show HUD state and which sections are enabled | `visualid.use` |
 | `/visual-id config <section> enable\|disable` | Toggle a display section and save | `visualid.reload` |

@@ -1,6 +1,6 @@
 package com.johnseth97.info.service;
 
-import com.johnseth97.info.config.InfoConfig;
+import com.johnseth97.info.config.VisualIdConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -10,18 +10,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
-public class InfoHudService {
+public class VisualIdHudService {
 
   private final Plugin plugin;
   private final TargetInfoService targetInfoService;
   private final Map<UUID, Boolean> enabledOverrides = new HashMap<>();
 
   private BukkitTask task;
-  private InfoConfig config;
+  private VisualIdConfig config;
 
-  public InfoHudService(
+  public VisualIdHudService(
     Plugin plugin,
-    InfoConfig config,
+    VisualIdConfig config,
     TargetInfoService targetInfoService
   ) {
     this.plugin = plugin;
@@ -47,7 +47,7 @@ public class InfoHudService {
     }
   }
 
-  public void reload(InfoConfig newConfig) {
+  public void reload(VisualIdConfig newConfig) {
     this.config = newConfig;
     start();
   }

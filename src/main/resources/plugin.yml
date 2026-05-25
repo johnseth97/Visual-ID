@@ -1,6 +1,6 @@
 name: VisualID
 version: 1.0.1
-main: com.johnseth97.info.InfoPlugin
+main: com.johnseth97.visualid.VisualIdPlugin
 api-version: '1.21'
 author: johnseth97
 description: Lightweight server-side Visual Identification HUD for Paper.

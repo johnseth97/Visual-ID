@@ -1,6 +1,6 @@
 package com.johnseth97.info.service;
 
-import com.johnseth97.info.config.InfoConfig;
+import com.johnseth97.info.config.VisualIdConfig;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class InfoHudServiceTest {
+class VisualIdHudServiceTest {
 
     @Mock Player player;
 
-    private static InfoConfig configWith(boolean enabledByDefault) {
+    private static VisualIdConfig configWith(boolean enabledByDefault) {
         YamlConfiguration cfg = new YamlConfiguration();
         cfg.set("enabled-by-default", enabledByDefault);
-        return new InfoConfig(cfg);
+        return new VisualIdConfig(cfg);
     }
 
     @BeforeEach
@@ -34,20 +34,20 @@ class InfoHudServiceTest {
 
     @Test
     void isEnabled_trueByDefault_startsEnabled() {
-        InfoHudService svc = new InfoHudService(null, configWith(true), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(true), null);
         assertTrue(svc.isEnabled(player));
     }
 
     @Test
     void toggle_trueByDefault_firstToggleDisables() {
-        InfoHudService svc = new InfoHudService(null, configWith(true), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(true), null);
         assertFalse(svc.toggle(player));
         assertFalse(svc.isEnabled(player));
     }
 
     @Test
     void toggle_trueByDefault_secondToggleRestores() {
-        InfoHudService svc = new InfoHudService(null, configWith(true), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(true), null);
         svc.toggle(player);
         assertTrue(svc.toggle(player));
         assertTrue(svc.isEnabled(player));
@@ -57,20 +57,20 @@ class InfoHudServiceTest {
 
     @Test
     void isEnabled_falseByDefault_startsDisabled() {
-        InfoHudService svc = new InfoHudService(null, configWith(false), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(false), null);
         assertFalse(svc.isEnabled(player));
     }
 
     @Test
     void toggle_falseByDefault_firstToggleEnables() {
-        InfoHudService svc = new InfoHudService(null, configWith(false), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(false), null);
         assertTrue(svc.toggle(player));
         assertTrue(svc.isEnabled(player));
     }
 
     @Test
     void toggle_falseByDefault_secondToggleDisables() {
-        InfoHudService svc = new InfoHudService(null, configWith(false), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(false), null);
         svc.toggle(player);
         assertFalse(svc.toggle(player));
         assertFalse(svc.isEnabled(player));
@@ -83,7 +83,7 @@ class InfoHudServiceTest {
         Player other = mock(Player.class);
         when(other.getUniqueId()).thenReturn(UUID.randomUUID());
 
-        InfoHudService svc = new InfoHudService(null, configWith(true), null);
+        VisualIdHudService svc = new VisualIdHudService(null, configWith(true), null);
         svc.toggle(player); // disable player
 
         assertFalse(svc.isEnabled(player));

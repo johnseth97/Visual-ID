@@ -1,6 +1,6 @@
 package com.johnseth97.info.service;
 
-import com.johnseth97.info.config.InfoConfig;
+import com.johnseth97.info.config.VisualIdConfig;
 import com.johnseth97.info.util.NameUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -19,7 +19,7 @@ public class TargetInfoService {
 
     private static final Component SEP = Component.text("  ·  ", NamedTextColor.DARK_GRAY);
 
-    public Component getTargetComponent(Player player, InfoConfig cfg) {
+    public Component getTargetComponent(Player player, VisualIdConfig cfg) {
         RayTraceResult entityResult = null;
         RayTraceResult blockResult;
 
@@ -54,7 +54,7 @@ public class TargetInfoService {
 
     // ── Block ──────────────────────────────────────────────────────────────────
 
-    private Component formatBlock(Block block, InfoConfig cfg) {
+    private Component formatBlock(Block block, VisualIdConfig cfg) {
         Component out = Component.text(NameUtil.pretty(block.getType().name()), NamedTextColor.WHITE);
 
         if (cfg.showNamespacedKey) {
@@ -79,7 +79,7 @@ public class TargetInfoService {
 
     // ── Entity ─────────────────────────────────────────────────────────────────
 
-    private Component formatEntity(Entity entity, InfoConfig cfg) {
+    private Component formatEntity(Entity entity, VisualIdConfig cfg) {
         String name = entity.customName() != null
                 ? PlainTextComponentSerializer.plainText().serialize(entity.customName())
                 : NameUtil.pretty(entity.getType().name());

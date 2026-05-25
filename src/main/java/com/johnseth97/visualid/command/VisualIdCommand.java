@@ -1,7 +1,7 @@
 package com.johnseth97.info.command;
 
-import com.johnseth97.info.InfoPlugin;
-import com.johnseth97.info.service.InfoHudService;
+import com.johnseth97.info.VisualIdPlugin;
+import com.johnseth97.info.service.VisualIdHudService;
 import com.johnseth97.info.service.TargetInfoService;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
@@ -13,7 +13,9 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.Map;
 
-public class InfoCommand extends Command implements CommandExecutor, TabCompleter {
+public class VisualIdCommand extends Command implements CommandExecutor, TabCompleter {
+
+    private static final int ONE_SHOT_MULTIPLIER = 3;
 
     // Maps short section names (used in the command) to config.yml paths.
     private static final Map<String, String> SECTIONS = Map.of(
@@ -25,11 +27,11 @@ public class InfoCommand extends Command implements CommandExecutor, TabComplete
             "health",      "show.entity-health"
     );
 
-    private final InfoPlugin plugin;
-    private final InfoHudService hudService;
+    private final VisualIdPlugin plugin;
+    private final VisualIdHudService hudService;
     private final TargetInfoService targetInfoService;
 
-    public InfoCommand(String name, InfoPlugin plugin, InfoHudService hudService, TargetInfoService targetInfoService) {
+    public VisualIdCommand(String name, VisualIdPlugin plugin, VisualIdHudService hudService, TargetInfoService targetInfoService) {
         super(name);
         setDescription("Visual Identification HUD.");
         setUsage("/" + name + " [toggle|status|reload|config]");
@@ -72,10 +74,13 @@ public class InfoCommand extends Command implements CommandExecutor, TabComplete
             player.sendMessage("[VisualID] Not looking at anything.");
             return;
         }
-        // Send immediately, then refresh once more after one interval to extend visibility.
+        // Send immediately, then refresh for a few intervals to extend visibility.
         player.sendActionBar(result);
         long interval = plugin.getInfoConfig().updateIntervalTicks;
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> player.sendActionBar(result), interval);
+        for (int i = 1; i < ONE_SHOT_MULTIPLIER; i++) {
+            long delay = interval * i;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> player.sendActionBar(result), delay);
+        }
     }
 
     private void handleToggle(CommandSender sender) {
@@ -87,8 +92,7 @@ public class InfoCommand extends Command implements CommandExecutor, TabComplete
             player.sendMessage("You don't have permission to do that.");
             return;
         }
-        boolean nowEnabled = hudService.toggle(player);
-        player.sendMessage("[VisualID] HUD " + (nowEnabled ? "enabled" : "disabled") + ".");
+        hudService.toggle(player);
     }
 
     private void handleStatus(CommandSender sender, String label) {

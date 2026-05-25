@@ -2,7 +2,7 @@ package com.johnseth97.info.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class InfoConfig {
+public class VisualIdConfig {
 
     public final boolean enabledByDefault;
     public final long updateIntervalTicks;
@@ -16,7 +16,7 @@ public class InfoConfig {
     public final boolean showLightLevel;
     public final boolean showEntityHealth;
 
-    public InfoConfig(FileConfiguration cfg) {
+    public VisualIdConfig(FileConfiguration cfg) {
         this.enabledByDefault   = cfg.getBoolean("enabled-by-default", true);
         this.updateIntervalTicks = Math.max(1, cfg.getLong("update-interval-ticks", 5));
         this.maxDistance        = Math.min(32.0, Math.max(1.0, cfg.getDouble("max-distance", 8.0)));

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class InfoConfigTest {
+class VisualIdConfigTest {
 
     private static YamlConfiguration cfg(Object... pairs) {
         YamlConfiguration c = new YamlConfiguration();
@@ -17,7 +17,7 @@ class InfoConfigTest {
 
     @Test
     void defaults_whenConfigIsEmpty() {
-        InfoConfig c = new InfoConfig(new YamlConfiguration());
+        VisualIdConfig c = new VisualIdConfig(new YamlConfiguration());
         assertTrue(c.enabledByDefault);
         assertEquals(5L, c.updateIntervalTicks);
         assertEquals(8.0, c.maxDistance);
@@ -32,7 +32,7 @@ class InfoConfigTest {
 
     @Test
     void customValues_areReadCorrectly() {
-        InfoConfig c = new InfoConfig(cfg(
+        VisualIdConfig c = new VisualIdConfig(cfg(
             "enabled-by-default",    false,
             "update-interval-ticks", 20L,
             "max-distance",          16.0,
@@ -52,32 +52,32 @@ class InfoConfigTest {
 
     @Test
     void maxDistance_isClampedToUpperBound() {
-        assertEquals(32.0, new InfoConfig(cfg("max-distance", 999.0)).maxDistance);
+        assertEquals(32.0, new VisualIdConfig(cfg("max-distance", 999.0)).maxDistance);
     }
 
     @Test
     void maxDistance_isClampedToLowerBound() {
-        assertEquals(1.0, new InfoConfig(cfg("max-distance", 0.0)).maxDistance);
+        assertEquals(1.0, new VisualIdConfig(cfg("max-distance", 0.0)).maxDistance);
     }
 
     @Test
     void maxDistance_atBoundaryValues_isUnchanged() {
-        assertEquals(1.0,  new InfoConfig(cfg("max-distance", 1.0)).maxDistance);
-        assertEquals(32.0, new InfoConfig(cfg("max-distance", 32.0)).maxDistance);
+        assertEquals(1.0,  new VisualIdConfig(cfg("max-distance", 1.0)).maxDistance);
+        assertEquals(32.0, new VisualIdConfig(cfg("max-distance", 32.0)).maxDistance);
     }
 
     @Test
     void updateIntervalTicks_zeroIsClampedToOne() {
-        assertEquals(1L, new InfoConfig(cfg("update-interval-ticks", 0L)).updateIntervalTicks);
+        assertEquals(1L, new VisualIdConfig(cfg("update-interval-ticks", 0L)).updateIntervalTicks);
     }
 
     @Test
     void updateIntervalTicks_negativeIsClampedToOne() {
-        assertEquals(1L, new InfoConfig(cfg("update-interval-ticks", -10L)).updateIntervalTicks);
+        assertEquals(1L, new VisualIdConfig(cfg("update-interval-ticks", -10L)).updateIntervalTicks);
     }
 
     @Test
     void updateIntervalTicks_validValueIsUnchanged() {
-        assertEquals(10L, new InfoConfig(cfg("update-interval-ticks", 10L)).updateIntervalTicks);
+        assertEquals(10L, new VisualIdConfig(cfg("update-interval-ticks", 10L)).updateIntervalTicks);
     }
 }

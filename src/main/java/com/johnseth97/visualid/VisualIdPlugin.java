@@ -1,8 +1,8 @@
 package com.johnseth97.info;
 
-import com.johnseth97.info.command.InfoCommand;
-import com.johnseth97.info.config.InfoConfig;
-import com.johnseth97.info.service.InfoHudService;
+import com.johnseth97.info.command.VisualIdCommand;
+import com.johnseth97.info.config.VisualIdConfig;
+import com.johnseth97.info.service.VisualIdHudService;
 import com.johnseth97.info.service.TargetInfoService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
@@ -10,23 +10,23 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 
-public class InfoPlugin extends JavaPlugin {
+public class VisualIdPlugin extends JavaPlugin {
 
-    private InfoConfig infoConfig;
-    private InfoHudService hudService;
+    private VisualIdConfig infoConfig;
+    private VisualIdHudService hudService;
     private TargetInfoService targetInfoService;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        infoConfig = new InfoConfig(getConfig());
+        infoConfig = new VisualIdConfig(getConfig());
 
         targetInfoService = new TargetInfoService();
-        hudService = new InfoHudService(this, infoConfig, targetInfoService);
+        hudService = new VisualIdHudService(this, infoConfig, targetInfoService);
         hudService.start();
 
         String keyword = getConfig().getString("command", "visual-id");
-        InfoCommand cmd = new InfoCommand(keyword, this, hudService, targetInfoService);
+        VisualIdCommand cmd = new VisualIdCommand(keyword, this, hudService, targetInfoService);
 
         // Always wire the plugin.yml-declared "visual-id" command — this ensures
         // Brigadier pushes it to the client so the command works correctly.
@@ -48,12 +48,12 @@ public class InfoPlugin extends JavaPlugin {
         if (hudService != null) hudService.stop();
     }
 
-    public InfoConfig getInfoConfig() {
+    public VisualIdConfig getInfoConfig() {
         return infoConfig;
     }
 
     public void applyInfoConfig() {
-        infoConfig = new InfoConfig(getConfig());
+        infoConfig = new VisualIdConfig(getConfig());
         hudService.reload(infoConfig);
     }
 
@@ -62,7 +62,7 @@ public class InfoPlugin extends JavaPlugin {
         applyInfoConfig();
     }
 
-    private void registerDynamic(String name, InfoCommand cmd) {
+    private void registerDynamic(String name, VisualIdCommand cmd) {
         try {
             Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
             field.setAccessible(true);
