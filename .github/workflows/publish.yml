@@ -12,16 +12,12 @@ on:
         type: string
 
 jobs:
-  publish:
+  prepare:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
-    env:
-      MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
-      MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-      COPILOT_ACCESS_TOKEN: ${{ secrets.COPILOT_ACCESS_TOKEN }}
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      tag: ${{ steps.resolve.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -40,6 +36,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Resolve version
+        id: resolve
         run: |
           set -euo pipefail
 
@@ -51,11 +48,12 @@ jobs:
 
           VERSION="${VERSION#v}"
 
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
           echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=v$VERSION" >> "$GITHUB_ENV"
 
       - name: Generate raw changelog from commits
-        id: raw_changelog
         run: |
           set -euo pipefail
 
@@ -92,10 +90,10 @@ jobs:
           cat CHANGELOG.generated.md
 
       - name: Try Copilot changelog polish
-        if: ${{ env.COPILOT_ACCESS_TOKEN != '' }}
+        if: ${{ secrets.COPILOT_ACCESS_TOKEN != '' }}
         continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ env.COPILOT_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -133,14 +131,50 @@ jobs:
           echo "Final changelog:"
           cat CHANGELOG.md
 
+      - name: Build
+        run: ./gradlew clean build -Pversion="${RELEASE_VERSION}"
+
+      - name: Upload JARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: jars
+          path: build/libs/*.jar
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG.md
+
+  publish-github:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+
+    steps:
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: jars
+          path: build/libs/
+
+      - name: Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+
+      - name: Read changelog
+        run: |
           {
             echo 'CHANGELOG_BODY<<EOF'
             cat CHANGELOG.md
             echo 'EOF'
           } >> "$GITHUB_ENV"
-
-      - name: Build
-        run: ./gradlew clean build -Pversion="${RELEASE_VERSION}"
 
       - name: Publish GitHub release
         uses: Kir-Antipov/mc-publish@v3.3
@@ -152,12 +186,82 @@ jobs:
           version-type: release
           changelog: ${{ env.CHANGELOG_BODY }}
 
+  publish-modrinth:
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: ${{ vars.MODRINTH_PROJECT_ID != '' && secrets.MODRINTH_TOKEN != '' }}
+
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+
+    steps:
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: jars
+          path: build/libs/
+
+      - name: Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+
+      - name: Read changelog
+        run: |
+          {
+            echo 'CHANGELOG_BODY<<EOF'
+            cat CHANGELOG.md
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
       - name: Publish to Modrinth
-        if: ${{ env.MODRINTH_PROJECT_ID != '' && env.MODRINTH_TOKEN != '' }}
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: ${{ env.MODRINTH_PROJECT_ID }}
-          modrinth-token: ${{ env.MODRINTH_TOKEN }}
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          files: build/libs/*.jar
+          name: Visual-ID ${{ env.RELEASE_VERSION }}
+          version: ${{ env.RELEASE_VERSION }}
+          version-type: release
+          changelog: ${{ env.CHANGELOG_BODY }}
+          loaders: |
+            paper
+          game-versions: |
+            1.21.4
+
+  publish-curseforge:
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: ${{ vars.CURSEFORGE_PROJECT_ID != '' && secrets.CURSEFORGE_TOKEN != '' }}
+
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+
+    steps:
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: jars
+          path: build/libs/
+
+      - name: Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+
+      - name: Read changelog
+        run: |
+          {
+            echo 'CHANGELOG_BODY<<EOF'
+            cat CHANGELOG.md
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
+      - name: Publish to CurseForge
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: build/libs/*.jar
           name: Visual-ID ${{ env.RELEASE_VERSION }}
           version: ${{ env.RELEASE_VERSION }}
